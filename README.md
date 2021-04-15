@@ -1,5 +1,5 @@
 # Network Monitor
-
+Application displays network speed (both download, and upload) from given time period. Uses Python and Django to implement Cron job, that stores data, and web app to display the data in browser. Data is stored in SQLite.
 
 
 ### Prerequisites

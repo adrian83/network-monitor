@@ -1,3 +1,4 @@
+from django.utils.timezone import make_aware
 
 from datetime import datetime
 
@@ -9,37 +10,40 @@ from .models import Metrics
 mega_byte = 1024 * 1024
 
 def measure_speed():
-    print("test")
     try:
-        print("starting")
         d_speed = 0
         u_speed = 0
         d_error = None
         u_error = None
-        date = datetime.now()
+        date = make_aware(datetime.now())
 
         s = None
 
         try:
             s = speedtest.Speedtest()
+        except ValueError as e:
+            error = str(e)
+            u_error = error
+            d_error = error
+        except speedtest.ConfigRetrievalError as e:
+            error = "no internet access or unavailable config: ({0})".format(str(e))
+            u_error = error
+            d_error = error
         except:
-            d_error = sys.exc_info()[0]
-            u_error = d_error
-            print("Error : {0}".format(d_error))
+            error = "unknown error: ({0})".format(str(sys.exc_info()[0]))
+            u_error = error
+            d_error = error
 
         if s:
             try:
-                print("2")
                 d_speed = s.download() / mega_byte
             except:
-                d_error = sys.exc_info()[0]
-                print("Error : {0}".format(d_error))
+                d_error = "unknown error: ({0})".format(str(sys.exc_info()[0]))
 
             try:
                 u_speed = s.upload() / mega_byte
             except:
-                u_error = sys.exc_info()[0]
-                print("Error: {0}".format(u_error))
+                u_error = "unknown error: ({0})".format(str(sys.exc_info()[0]))
 
         m = Metrics(
             download_speed=d_speed,
@@ -52,4 +56,4 @@ def measure_speed():
 
         print("storing: {0}".format(m))
     except Exception as e:
-        print("Error: {0}".format(e))
+        print("error: {0}".format(e))

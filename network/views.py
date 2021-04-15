@@ -3,6 +3,7 @@ from django.views import View
 from django.http import HttpResponse
 from django.core import serializers
 from django.template import loader
+from django.utils.timezone import make_aware
 
 
 from datetime import datetime, timedelta
@@ -25,8 +26,8 @@ def to_datetime(dt_str):
         return None
 
     try:
-        return datetime.strptime(dt_str, datetime_tmpt)
-    except ValueError as ve:
+        return make_aware(datetime.strptime(dt_str, datetime_tmpt))
+    except: # ValueError as ve:
         return None
 
 
@@ -74,7 +75,9 @@ def stats_from_metrics(metrics, get_speed, error_msg):
         speed_sum += speed
         count += 1
 
-    avg_speed = speed_sum / count
+    errors.sort(key=lambda e: e.date, reverse=True)
+
+    avg_speed = speed_sum / count if count else 0
 
     return Stats(max_speed, min_speed, avg_speed, count, errors)
 
@@ -88,19 +91,15 @@ class MetricsView(View):
 
     def get(self, request, *args, **kwargs):
 
-        from_str = request.GET.get("from")
-        to_str = request.GET.get("to")
+        from_str = request.GET.get("from_hours")
+        if not from_str:
+            return redirect('/?from_hours={0}'.format(4))
 
-        to_dt = to_datetime(to_str)
-        from_dt = to_datetime(from_str)
 
-        to_dt = to_dt if to_dt else datetime.now()
+        hours = int(from_str)
+        from_dt = make_aware(datetime.now()) - timedelta(hours=hours, minutes=0)
 
-        if not from_dt:
-            from_dt = to_dt - timedelta(hours=24)
-            return redirect('/?from={0}'.format(to_string(from_dt)))
-
-        metrics = Metrics.objects.filter(date__gt=from_dt, date__lt=to_dt)
+        metrics = Metrics.objects.filter(date__gt=from_dt) #, date__lt=to_dt)
 
         d_stats = stats_from_metrics(metrics, d_speed, d_error)
         u_stats = stats_from_metrics(metrics, u_speed, u_error)

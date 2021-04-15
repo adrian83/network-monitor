@@ -27,6 +27,12 @@
   <body>
     
     <script>
+      function showOrHide(elemId) {
+          var elem = document.getElementById(elemId);
+          var display = elem.style.display;
+          elem.style.display = (display === "" || display === "block") ? "none" : "block";
+        };
+
       setTimeout(function(){
         window.location.reload(1);
       }, 60000);
@@ -84,10 +90,12 @@
             <br/>
 
             {% if result.download_stats.errors %}
-              <h3>Download errors</h3>
-              {% for e in result.download_stats.errors %}
-                {{ e.date|date:"Y-m-d H:m:s" }} - {{ e.message }}<br/>
-              {% endfor %}
+              <h4><a id="download-errors" href="#">Download errors ({{ result.download_stats.errors|length }})</a></h4>
+              <div id="download-errors-container" style="display:none;">
+                {% for e in result.download_stats.errors %}
+                  {{ e.date|date:"Y-m-d H:m:s" }} - {{ e.message }}<br/>
+                {% endfor %}
+              </div>
             {% endif %}
 
           </div>
@@ -131,15 +139,24 @@
             <br/>
 
             {% if result.upload_stats.errors %}
-              <h3>Upload errors</h3>
+            <h4><a id="upload-errors" href="#">Upload errors ({{ result.upload_stats.errors|length }})</a></h4>
+            <div id="upload-errors-container" style="display:none;">
               {% for e in result.upload_stats.errors %}
                 {{ e.date|date:"Y-m-d H:m:s" }} - {{ e.message }}<br/>
               {% endfor %}
+            </div>
             {% endif %}
 
           </div>
         </div>
       </div>
+
+      <script>
+        document.getElementById('download-errors').onclick = function() { showOrHide("download-errors-container"); };
+        document.getElementById('upload-errors').onclick = function() { showOrHide("upload-errors-container"); };
+      </script>
+      
+
     </main>
 
     <footer class="text-muted">
